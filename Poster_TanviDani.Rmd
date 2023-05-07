@@ -1,0 +1,143 @@
+---
+main_topsize: 0.1 #percent coverage of the poster
+main_bottomsize: 0.1
+#ESSENTIALS
+title: '**Comparing fatalities acorss Conflict Event types**'
+author:
+  - name: '**Tanvi Dani**'
+    affil: 1
+    main: true
+    email: dani.tanvi@gmail.com
+affiliation:
+  - num: 1
+    address: School of International Service, American University, Washington, D.C.
+main_findings:
+  - "**Higher intensity conflict events have higher fatalities**"
+primary_colour: "#0063B2FF"
+secondary_colour: "#9CC3D5FF"
+accent_colour: "#cc0000"
+output: 
+  posterdown::posterdown_betterport:
+    self_contained: false #true- image data into html
+    pandoc_args: --mathjax
+    number_sections: false
+link-citations: true
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      tidy = FALSE,
+                      message = FALSE,
+                      fig.align = 'center',
+                      out.width = "100%")
+options(knitr.table.format = "html") 
+```
+
+``` {r, echo = FALSE, eval = TRUE, message = FALSE, warning = FALSE}
+library(tidyverse)
+library(patchwork)
+
+
+library(knitr)
+library(readxl)
+library(ggplot2)
+library(kableExtra)
+library(stargazer)
+library(modelr)
+```
+
+# Introduction
+
+This poster touches briefly on the connection between the type of conflict event and the number of fatalities occurring due to it. The poster displays tables and graphs to better understand the distribution of fatalities across different event types and a linear regression model estimating the impact of the conflcit happening in different regions of the world on the number of fatalities. 
+
+## Objectives
+
+1. Null hypothesis- There is no relationship between the type of conflict event and the number of fatalities. 
+2. Alternate Hypothesis- There is a relationship between the type of conflict event and the number of fatalities observed.
+
+# Methods
+
+For the analysis, I am using quantitative methods. The research focuses on analyzing the relationship between 2 variables- FATALITIES (numeric) and EVENT_TYPE (categorical) from the [ACLED Asia-Pacific dataset](https://acleddata.com/curated-data-files/#). In this research, the Event type is the Independent variable (Predictor variable) and Fatalities is the Dependent variable. The regression model at the end of the poster predicts whether there is a significant relationship between the type of conflicting event and the number of fatalities. 
+
+
+
+
+# Results
+
+Below 2 graphs represent the distribution of total and mean fatalities across conflict event types
+
+```{r, eval=TRUE, fig.cap='Here is a caption for the figure.', out.width="80%", include=FALSE}
+df1 = read_excel('Asia_ACLED.xlsx')
+tab1 = group_by(df1, EVENT_TYPE) %>%
+  summarise(
+    n = sum(!is.na(FATALITIES)),
+    Avg = mean(FATALITIES, na.rm = T),
+    StdDev = sd(FATALITIES, na.rm = T),
+    `0` = min(FATALITIES, na.rm = T),
+    `50` = median(FATALITIES, na.rm = T),
+    `100` = max(FATALITIES, na.rm = T)
+  ) %>%
+  na.omit()
+tab1
+```
+
+
+### Description of Data
+
+```{r Graphs, echo=FALSE, fig.cap='Graphs depicting fatalities', fig.height=6, out.width="80%", eval = TRUE, warning = FALSE, message = FALSE}
+ggplot(df1, aes(x = fct_reorder(EVENT_TYPE, FATALITIES, .fun = 'median'), 
+                y = FATALITIES)) +
+  geom_point() +
+  scale_y_continuous(expand = c(0, 0)) +
+                       coord_flip() +
+  theme_minimal() +
+  ggtitle("Comparing total fatalities across different conflict events") +
+  theme(plot.title = element_text(face = "bold")) +
+  labs(x = "Type of event")
+```
+
+``` {r Graph 2, echo=FALSE, fig.cap='Graphs depicting fatalities', fig.height=6, out.width="80%",eval = TRUE, warning = FALSE, message = FALSE}
+ggplot(tab1, aes(x = fct_reorder(EVENT_TYPE, Avg), y = Avg)) +
+    geom_col() + 
+    scale_y_continuous(expand = c(0, 0)) +
+    coord_flip() +
+  theme_classic() +
+  ggtitle("Comparing average fatalities across different conflict events") +
+  theme(plot.title = element_text(face = "bold")) +
+  labs(x = "Type of event")
+```
+
+A table comparing the average number of fatalities associated with different event types:
+
+```{r, eval = TRUE, echo = FALSE, warning = FALSE, message = FALSE}
+  group_by(df1, EVENT_TYPE) %>%
+    summarize(mean = mean(FATALITIES, na.rm = T)) %>%
+  kbl(.,align = rep("c",5), digits = 1L) %>%
+    kable_classic(full_width = F, html_font = "Cambria")
+```
+
+&nbsp; 
+
+
+
+### Regression table explaining the means of each event type and Fatalities
+``` {r, eval = TRUE, echo = FALSE, warning = FALSE, message = FALSE, results= "asis"}
+catmod1 = lm(FATALITIES ~ EVENT_TYPE, df1)
+  stargazer(catmod1, type = "html", keep.stat = 'n', digits = 1)
+``` 
+
+From the table and the regression table above, we can see that the category "Battles" is the excluded category in the regression table, which is the constant 2.87 ~ 2.9. 
+
+The constant represents the expected outcome when the predictors equal zero. So, the expected mean fatalities when Event type is Battles is 2.9. Similarly, the the mean fatalities during explosions/remote violence is the difference between the constant and the coefficient corresponding to that category in the regression table which is 2.871- 0.658= 2.2. 
+
+The coefficients on the included categories represent the difference in means relative to this excluded category. The mean fatalities in all categories is less than the constant (Battles) category and the difference is statistically significant in all cases. 
+
+
+### Significance of the regression model
+
+According to the ANOVA analysis, the variable EVENT_TYPE has a df value of 5, an F-value of 12530, and is statistically significant in explaining the number of fatalities. 
+
+### Findings
+
+From the graphs and the analysis presented in this poster, we can observe that higher intensity conflict events like battles and explosions/remote violence experience greater number of fatalities and the result is statistically significant. On the other hand, the mean number of fatalities in protests and riots is significantly lower. These observations are statistically significant in the Asia Pacific region, which the ACLED data is based on. 
